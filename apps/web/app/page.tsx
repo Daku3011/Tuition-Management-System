@@ -136,7 +136,7 @@ export default function HomePage() {
             </div>
 
             {/* Test Credentials Helper */}
-            <div className="mt-12 bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-lg text-left">
+            {/* <div className="mt-12 bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-lg text-left">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-400" />
@@ -161,17 +161,17 @@ export default function HomePage() {
                   <p className="text-slate-300 mt-1">Student@123</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white py-6">
+      {/* <footer className="border-t bg-white py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
           Tuition Management System • Built with FastAPI, Next.js 14, Expo & Supabase PostgreSQL
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
