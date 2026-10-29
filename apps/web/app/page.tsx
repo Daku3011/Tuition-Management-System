@@ -18,7 +18,7 @@ export default function HomePage() {
               <GraduationCap className="h-6 w-6" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-slate-900">Apex Academy</span>
+              <span className="text-xl font-bold tracking-tight text-slate-900">Shree Eduzone</span>
               <span className="block text-xs text-slate-500 font-medium">Tuition Management System</span>
             </div>
           </div>

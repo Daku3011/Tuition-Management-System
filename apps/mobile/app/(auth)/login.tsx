@@ -73,7 +73,7 @@ export default function MobileLoginScreen() {
           <View style={styles.logoBadge}>
             <Text style={styles.logoText}>TMS</Text>
           </View>
-          <Text style={styles.title}>Apex Academy</Text>
+          <Text style={styles.title}>Shree Eduzone</Text>
           <Text style={styles.subtitle}>Mobile Education Portal</Text>
 
           {/* Quick Demo Tabs */}

@@ -1,4 +1,4 @@
-# Apex Academy - Tuition Management System (TMS)
+# Shree Eduzone - Tuition Management System (TMS)
 ### Enterprise Multi-Tenant Full-Stack Web Platform & Expo Mobile App
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI_0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary & Architecture
 
-The **Apex Academy Tuition Management System (TMS)** is a complete, production-ready educational management ecosystem designed for private coaching centers, tuition academies, and multi-branch educational institutes.
+The **Shree Eduzone Tuition Management System (TMS)** is a complete, production-ready educational management ecosystem designed for private coaching centers, tuition academies, and multi-branch educational institutes.
 
 The system replaces disconnected spreadsheets and ad-hoc communication with a single, highly integrated platform serving three distinct user roles: **Administrators**, **Faculty Members**, and **Enrolled Students & Guardians**.
 

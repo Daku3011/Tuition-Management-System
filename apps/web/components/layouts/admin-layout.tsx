@@ -92,7 +92,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <GraduationCap className="h-5 w-5" />
           </div>
           <div>
-            <span className="font-bold text-white text-base">Apex Academy</span>
+            <span className="font-bold text-white text-base">Shree Eduzone</span>
             <span className="block text-[11px] text-slate-400 font-medium">Admin Portal</span>
           </div>
         </div>

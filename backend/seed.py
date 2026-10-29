@@ -48,7 +48,7 @@ def run_seed():
 
         # 1. Primary Institute
         institute = Institute(
-            name="Apex Academy of Science & Mathematics",
+            name="Shree Eduzone of Science & Mathematics",
             code="APEX-ACADEMY",
             address="Plot 42, Knowledge Corridor, Near University Circle, Ahmedabad, Gujarat 380015",
             contact_email="admin@apexacademy.com",

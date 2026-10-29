@@ -82,7 +82,7 @@ export function StudentLayout({ children }: { children: React.ReactNode }) {
             <GraduationCap className="h-5 w-5" />
           </div>
           <div>
-            <span className="font-bold text-white text-base">Apex Academy</span>
+            <span className="font-bold text-white text-base">Shree Eduzone</span>
             <span className="block text-[11px] text-emerald-400 font-medium">Student Portal</span>
           </div>
         </div>
