@@ -35,6 +35,12 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",") if i.strip()]
         return v
 
+    # Redis Configuration (Caching, Sessions & Background Queues)
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_ENABLED: bool = True
+    REDIS_SESSION_TTL_SECONDS: int = 604800  # 7 days
+    REDIS_CACHE_TTL_DEFAULT: int = 300       # 5 minutes
+
     # Supabase / Object Storage
     SUPABASE_URL: str = "https://your-project.supabase.co"
     SUPABASE_ANON_KEY: str = ""

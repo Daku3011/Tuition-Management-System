@@ -35,6 +35,9 @@ from app.schemas.finance import (
 )
 from app.schemas.common import ApiResponse
 from app.permissions.deps import get_current_user, require_admin
+from app.core.cache import invalidate_namespace
+from app.workers.queue import enqueue_task
+from app.workers.tasks import generate_fee_receipt_async_task
 
 router = APIRouter()
 
@@ -309,6 +312,18 @@ def record_payment(
     db.add(audit)
     db.commit()
     db.refresh(payment)
+
+    # Invalidate dashboard cache
+    invalidate_namespace("dashboard")
+
+    # Enqueue background task for receipt processing & notification
+    enqueue_task(
+        generate_fee_receipt_async_task,
+        payment.id,
+        payload.student_id,
+        float(payload.amount),
+        "INR"
+    )
 
     student_name = (
         assignment.student.user.profile.full_name

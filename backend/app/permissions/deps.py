@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.sessions import is_session_valid, touch_session
 from app.models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
@@ -35,6 +36,14 @@ def get_current_user(
             detail="Token payload is missing subject",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    jti: Optional[str] = payload.get("jti")
+    if jti and not is_session_valid(user_id, jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session has been revoked or expired. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -48,6 +57,11 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is deactivated or suspended",
         )
+
+    # Touch active session in Redis
+    if jti:
+        touch_session(user_id, jti)
+        setattr(user, "current_session_id", jti)
     
     return user
 

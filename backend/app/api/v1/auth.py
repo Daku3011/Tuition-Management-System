@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
@@ -10,6 +11,12 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
     generate_random_token,
+)
+from app.core.sessions import (
+    create_user_session,
+    list_user_sessions,
+    revoke_session,
+    revoke_all_user_sessions,
 )
 from app.models.user import User, UserProfile, UserRole
 from app.models.communication import AuditLog
@@ -32,7 +39,7 @@ router = APIRouter()
 
 
 @router.post("/login", response_model=ApiResponse[TokenResponse])
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, req: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email.lower().strip()).first()
     if not user or not user.hashed_password:
         raise HTTPException(
@@ -55,6 +62,11 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     # Update last login
     user.last_login_at = utc_now()
     
+    # Extract client metadata and create tracked device session in Redis
+    user_agent = req.headers.get("user-agent")
+    client_ip = req.client.host if req.client else "unknown"
+    session_id = create_user_session(user.id, user_agent=user_agent, ip_address=client_ip)
+
     # Write audit log
     audit = AuditLog(
         institute_id=user.institute_id,
@@ -62,7 +74,12 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         action="USER_LOGIN",
         entity_type="User",
         entity_id=user.id,
-        details={"email": user.email, "role": user.role.value}
+        details={
+            "email": user.email,
+            "role": user.role.value,
+            "session_id": session_id,
+            "ip_address": client_ip,
+        }
     )
     db.add(audit)
     db.commit()
@@ -72,9 +89,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         subject=user.id,
         role=user.role.value,
         institute_id=user.institute_id,
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        session_id=session_id
     )
-    refresh_token = create_refresh_token(subject=user.id)
+    refresh_token = create_refresh_token(subject=user.id, session_id=session_id)
 
     token_data = TokenResponse(
         access_token=access_token,
@@ -84,6 +102,37 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     )
 
     return ApiResponse(data=token_data, message="Login successful")
+
+
+@router.get("/sessions", response_model=ApiResponse[List[dict]])
+def get_active_sessions(current_user: User = Depends(get_current_user)):
+    """List all active device sessions for the authenticated user."""
+    cur_session = getattr(current_user, "current_session_id", None)
+    sessions = list_user_sessions(current_user.id, current_session_id=cur_session)
+    return ApiResponse(data=sessions, message="Active sessions retrieved")
+
+
+@router.delete("/sessions/{session_id}", response_model=ApiResponse[dict])
+def revoke_device_session(session_id: str, current_user: User = Depends(get_current_user)):
+    """Revoke a specific device session."""
+    success = revoke_session(current_user.id, session_id)
+    return ApiResponse(data={"revoked": success, "session_id": session_id}, message="Session revoked")
+
+
+@router.post("/logout-all", response_model=ApiResponse[dict])
+def logout_all_devices(current_user: User = Depends(get_current_user)):
+    """Log out of all active devices."""
+    count = revoke_all_user_sessions(current_user.id)
+    return ApiResponse(data={"revoked_count": count}, message="Logged out from all devices successfully")
+
+
+@router.post("/logout", response_model=ApiResponse[dict])
+def logout(current_user: User = Depends(get_current_user)):
+    """Log out of current device session."""
+    cur_session = getattr(current_user, "current_session_id", None)
+    if cur_session:
+        revoke_session(current_user.id, cur_session)
+    return ApiResponse(data={"logged_out": True}, message="Successfully logged out")
 
 
 @router.post("/refresh", response_model=ApiResponse[TokenResponse])

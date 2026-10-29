@@ -25,7 +25,8 @@ def create_access_token(
     subject: Union[str, Any],
     role: str,
     institute_id: str,
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    session_id: Optional[str] = None
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -39,13 +40,16 @@ def create_access_token(
         "type": "access",
         "exp": expire
     }
+    if session_id:
+        to_encode["jti"] = str(session_id)
     encoded_jwt = jwt.encode(to_encode, settings.AUTH_SECRET_KEY, algorithm=settings.AUTH_ALGORITHM)
     return encoded_jwt
 
 
 def create_refresh_token(
     subject: Union[str, Any],
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    session_id: Optional[str] = None
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -57,6 +61,8 @@ def create_refresh_token(
         "type": "refresh",
         "exp": expire
     }
+    if session_id:
+        to_encode["jti"] = str(session_id)
     encoded_jwt = jwt.encode(to_encode, settings.AUTH_SECRET_KEY, algorithm=settings.AUTH_ALGORITHM)
     return encoded_jwt
 

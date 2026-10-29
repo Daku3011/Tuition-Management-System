@@ -25,6 +25,9 @@ from app.schemas.attendance import (
 )
 from app.schemas.common import ApiResponse
 from app.permissions.deps import get_current_user, require_staff
+from app.core.cache import invalidate_namespace
+from app.workers.queue import enqueue_task
+from app.workers.tasks import batch_attendance_alert_task
 
 router = APIRouter()
 
@@ -129,7 +132,11 @@ def submit_batch_attendance(
         db.flush()
 
     # Insert or update records
+    absent_student_ids = []
     for rec in payload.records:
+        if rec.status == AttendanceStatus.ABSENT:
+            absent_student_ids.append(rec.student_id)
+
         existing_rec = db.query(AttendanceRecord).filter(
             AttendanceRecord.attendance_session_id == session.id,
             AttendanceRecord.student_id == rec.student_id
@@ -160,6 +167,19 @@ def submit_batch_attendance(
     db.add(audit)
     db.commit()
     db.refresh(session)
+
+    # Invalidate cached dashboard stats across the institute
+    invalidate_namespace("dashboard")
+
+    # Enqueue Redis Background Task to notify guardians of absent students
+    if absent_student_ids:
+        enqueue_task(
+            batch_attendance_alert_task,
+            batch.name,
+            str(payload.session_date),
+            len(absent_student_ids),
+            absent_student_ids
+        )
 
     return ApiResponse(data=serialize_session_response(session, db), message="Attendance submitted successfully")
 

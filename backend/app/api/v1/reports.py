@@ -17,6 +17,7 @@ from app.models.finance import Payment, PaymentStatus, FeeInstallment, FeeStatus
 from app.schemas.communication import DashboardStatsResponse, FeeMetricMonth
 from app.schemas.common import ApiResponse
 from app.permissions.deps import require_admin, require_staff
+from app.core.cache import get_cached_json, set_cached_json
 
 router = APIRouter()
 
@@ -28,6 +29,11 @@ def get_dashboard_stats(
 ):
     inst_id = admin.institute_id
     today = date.today()
+
+    cache_key = f"dashboard_stats:{inst_id}"
+    cached = get_cached_json(cache_key)
+    if cached:
+        return ApiResponse(data=DashboardStatsResponse(**cached), message="Dashboard stats (cached)")
 
     # Active counts
     students_count = db.query(Student).filter(
@@ -149,6 +155,8 @@ def get_dashboard_stats(
         upcoming_exams_count=upcoming_exams,
         monthly_collection_trend=months_trend
     )
+
+    set_cached_json(cache_key, stats.model_dump(), ttl_seconds=60, namespace="dashboard")
 
     return ApiResponse(data=stats)
 

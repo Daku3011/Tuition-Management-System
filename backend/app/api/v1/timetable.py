@@ -9,6 +9,7 @@ from app.models.academic import ClassSession, Batch, Subject, BatchEnrollment, E
 from app.schemas.academic import ClassSessionCreate, ClassSessionResponse
 from app.schemas.common import ApiResponse
 from app.permissions.deps import get_current_user, require_admin
+from app.core.cache import get_cached_json, set_cached_json, invalidate_namespace
 
 router = APIRouter()
 
@@ -48,6 +49,11 @@ def get_timetable(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    cache_key = f"timetable:{current_user.institute_id}:{current_user.id}:{batch_id}:{faculty_id}:{day_of_week}"
+    cached = get_cached_json(cache_key)
+    if cached is not None:
+        return ApiResponse(data=[ClassSessionResponse(**c) for c in cached], message="Timetable (cached)")
+
     query = db.query(ClassSession).filter(ClassSession.institute_id == current_user.institute_id)
 
     # If student is querying, restrict to their enrolled batches unless admin
@@ -78,7 +84,9 @@ def get_timetable(
         query = query.filter(ClassSession.day_of_week == day_of_week)
 
     sessions = query.order_by(ClassSession.day_of_week, ClassSession.start_time).all()
-    return ApiResponse(data=[serialize_session(s) for s in sessions])
+    results = [serialize_session(s) for s in sessions]
+    set_cached_json(cache_key, [r.model_dump() for r in results], ttl_seconds=300, namespace="timetable")
+    return ApiResponse(data=results)
 
 
 @router.post("", response_model=ApiResponse[ClassSessionResponse])
@@ -113,5 +121,7 @@ def create_class_session(
     db.add(session_entry)
     db.commit()
     db.refresh(session_entry)
+
+    invalidate_namespace("timetable")
 
     return ApiResponse(data=serialize_session(session_entry), message="Timetable class session created")
