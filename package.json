@@ -1,0 +1,32 @@
+{
+  "name": "tuition-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-Ready Tuition Management System (TMS) Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "web:dev": "npm --prefix apps/web run dev",
+    "web:build": "npm --prefix apps/web run build",
+    "web:start": "npm --prefix apps/web run start",
+    "web:lint": "npm --prefix apps/web run lint",
+    "mobile:start": "npm --prefix apps/mobile run start",
+    "mobile:android": "npm --prefix apps/mobile run android",
+    "mobile:ios": "npm --prefix apps/mobile run ios",
+    "backend:dev": "cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001} --reload",
+    "backend:test": "cd backend && pytest -v",
+    "test": "npm --prefix apps/web run test && cd backend && pytest -v"
+  },
+  "keywords": [
+    "tuition",
+    "education",
+    "fastapi",
+    "nextjs",
+    "expo",
+    "supabase"
+  ],
+  "author": "DWK Architects",
+  "license": "MIT"
+}
